@@ -1,128 +1,128 @@
-# Strobika - Sistem Deteksi Penyakit Daun Stroberi
+# Strobika - Strawberry Leaf Disease Detection System
 
 ![Strobika Logo](static/images/logo.png)
 
-## 📝 Deskripsi Proyek
+## 📝 Project Description
 
-Strobika adalah aplikasi web berbasis AI yang dirancang untuk mendeteksi penyakit pada daun tanaman stroberi. Aplikasi ini menggunakan model YOLOv8 untuk mengidentifikasi berbagai jenis penyakit daun stroberi dengan cepat dan akurat, membantu petani dan penghobi dalam mendiagnosis masalah tanaman stroberi mereka.
+Strobika is an AI-powered web application designed to detect diseases in strawberry plant leaves. The application uses a YOLOv8 model to quickly and accurately identify various types of strawberry leaf diseases, helping farmers and hobbyists diagnose problems with their strawberry plants.
 
-## ✨ Fitur Utama
+## ✨ Key Features
 
-- **Deteksi Penyakit**: Unggah gambar daun stroberi untuk identifikasi penyakit secara instan
-- **Deteksi Realtime**: Gunakan webcam untuk deteksi penyakit secara langsung
-- **Asisten AI**: Chatbot terintegrasi dengan Gemini API untuk memberikan informasi dan solusi tentang penyakit yang terdeteksi
-- **Hasil Terperinci**: Visualisasi hasil deteksi dengan tingkat akurasi dan lokasi penyakit
-- **Antarmuka Responsif**: Desain modern yang berfungsi dengan baik di berbagai perangkat
+- **Disease Detection**: Upload strawberry leaf images for instant disease identification
+- **Realtime Detection**: Use your webcam for live disease detection
+- **AI Assistant**: Integrated chatbot using Gemini API to provide information and solutions for detected diseases
+- **Detailed Results**: Visualization of detection results with accuracy levels and disease locations
+- **Responsive Interface**: Modern design that works well across various devices
 
-## 🛠️ Teknologi yang Digunakan
+## 🛠️ Technologies Used
 
 - **Backend**: Python, Flask
 - **Frontend**: HTML, CSS, JavaScript
-- **AI/ML**: YOLOv8 untuk deteksi objek
-- **LLM**: Google Gemini API untuk chatbot
+- **AI/ML**: YOLOv8 for object detection
+- **LLM**: Google Gemini API for chatbot
 - **Media Processing**: OpenCV, PIL
 
-## 📋 Prasyarat
+## 📋 Prerequisites
 
-- Python 3.8 atau lebih baru
+- Python 3.8 or newer
 - pip (Python package manager)
-- Webcam (untuk fitur deteksi realtime)
+- Webcam (for realtime detection feature)
 
-## 🚀 Instalasi
+## 🚀 Installation
 
-1. **Clone repositori**
+1. **Clone the repository**
 
    ```bash
    git clone https://github.com/sincanmaulanaa/strobika.git
    cd strobika
    ```
 
-2. **Buat virtual environment (disarankan)**
+2. **Create a virtual environment (recommended)**
 
    ```bash
    python -m venv venv
-   source venv/bin/activate  # Untuk Linux/Mac
-   # atau
-   venv\Scripts\activate  # Untuk Windows
+   source venv/bin/activate  # For Linux/Mac
+   # or
+   venv\Scripts\activate  # For Windows
    ```
 
-3. **Instal dependensi**
+3. **Install dependencies**
 
    ```bash
    pip install -r requirements.txt
    ```
 
-4. **Download model YOLOv8**
+4. **Download YOLOv8 model**
 
    ```bash
-   # Pastikan model.pt berada di direktori utama aplikasi
-   # Jika belum tersedia, download dari sumber yang sesuai
+   # Ensure model.pt is in the main application directory
+   # If not available, download from the appropriate source
    ```
 
-5. **Konfigurasi API Key Gemini**
-   - Dapatkan API key dari [Google AI Studio](https://makersuite.google.com/app/apikey)
-   - Perbarui `GEMINI_API_KEY` di file app.py
+5. **Configure Gemini API Key**
+   - Get your API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
+   - Create a .env file in the root directory with `GEMINI_API_KEY=your_api_key_here`
 
-## 🔧 Penggunaan
+## 🔧 Usage
 
-1. **Jalankan aplikasi**
+1. **Run the application**
 
    ```bash
    python app.py
    ```
 
-2. **Akses aplikasi**
+2. **Access the application**
 
-   - Buka browser web dan akses `http://localhost:5000`
+   - Open a web browser and navigate to `http://localhost:5000`
 
-3. **Deteksi Penyakit**
+3. **Disease Detection**
 
-   - Pilih gambar daun stroberi dari perangkat Anda atau
-   - Seret dan lepas gambar ke area upload
-   - Klik tombol "Deteksi"
+   - Select a strawberry leaf image from your device or
+   - Drag and drop an image to the upload area
+   - Click the "Detect" button
 
-4. **Deteksi Realtime**
+4. **Realtime Detection**
 
-   - Klik tombol "Deteksi Realtime dengan Webcam"
-   - Izinkan akses kamera jika diminta
-   - Arahkan kamera ke daun stroberi dan klik "Deteksi Sekarang"
+   - Click the "Realtime Detection with Webcam" button
+   - Allow camera access if prompted
+   - Point your camera at strawberry leaves and click "Detect Now"
 
-5. **Konsultasi dengan Chatbot**
-   - Pada halaman hasil, klik ikon chatbot di pojok kanan bawah
-   - Ajukan pertanyaan tentang penyakit yang terdeteksi
+5. **Consult with the Chatbot**
+   - On the results page, click the chatbot icon in the bottom right corner
+   - Ask questions about the detected disease
 
-## 📂 Struktur Proyek
+## 📂 Project Structure
 
 ```
 strobika/
-├── app.py                 # File utama aplikasi Flask
-├── model.pt               # Model YOLOv8 terlatih
-├── requirements.txt       # Dependensi Python
-├── static/                # Aset statis
-│   ├── css/               # File stylesheet
-│   │   └── style.css      # Stylesheet utama
-│   ├── images/            # Gambar dan ikon
-│   │   └── logo.png       # Logo Strobika
-│   └── results/           # Hasil deteksi tersimpan
-├── templates/             # Template HTML
-│   ├── index.html         # Halaman utama
-│   ├── detection.html     # Halaman hasil deteksi
-│   └── realtime.html      # Halaman deteksi realtime
-└── uploads/               # Penyimpanan gambar terunggah
+├── app.py                 # Main Flask application file
+├── model.pt               # Trained YOLOv8 model
+├── requirements.txt       # Python dependencies
+├── static/                # Static assets
+│   ├── css/               # Stylesheet files
+│   │   └── style.css      # Main stylesheet
+│   ├── images/            # Images and icons
+│   │   └── logo.png       # Strobika logo
+│   └── results/           # Stored detection results
+├── templates/             # HTML templates
+│   ├── index.html         # Main page
+│   ├── detection.html     # Detection results page
+│   └── realtime.html      # Realtime detection page
+└── uploads/               # Uploaded image storage
 ```
 
-## 🔄 API Endpoint
+## 🔄 API Endpoints
 
-| Endpoint           | Metode | Deskripsi                                       |
+| Endpoint           | Method | Description                                     |
 | ------------------ | ------ | ----------------------------------------------- |
-| `/`                | GET    | Halaman utama aplikasi                          |
-| `/deteksi`         | POST   | Menerima gambar terunggah dan memproses deteksi |
-| `/detection`       | GET    | Menampilkan hasil deteksi                       |
-| `/realtime`        | GET    | Halaman deteksi realtime dengan webcam          |
-| `/realtime_detect` | POST   | Memproses gambar dari webcam                    |
-| `/chatbot`         | POST   | Endpoint untuk interaksi dengan chatbot         |
+| `/`                | GET    | Main application page                           |
+| `/deteksi`         | POST   | Receives uploaded image and processes detection |
+| `/detection`       | GET    | Displays detection results                      |
+| `/realtime`        | GET    | Realtime detection page with webcam             |
+| `/realtime_detect` | POST   | Processes images from webcam                    |
+| `/chatbot`         | POST   | Endpoint for chatbot interaction                |
 
-## 📦 Dependensi Utama
+## 📦 Main Dependencies
 
 - Flask
 - Ultralytics YOLOv8
@@ -131,38 +131,42 @@ strobika/
 - Pillow
 - Werkzeug
 
-Lihat requirements.txt untuk daftar lengkap dependensi dan versinya.
+See requirements.txt for a complete list of dependencies and their versions.
 
-## 📊 Kelas Penyakit yang Dapat Dideteksi
+## 📊 Detectable Disease Classes
 
-- Bercak Daun (Leaf Spot)
-- Embun Tepung (Powdery Mildew)
-- Karat Daun (Leaf Rust)
-- Busuk Abu-abu (Gray Mold)
-- Daun Sehat (Healthy Leaf)
+- Leaf Spot
+- Powdery Mildew
+- Leaf Rust
+- Gray Mold
+- Healthy Leaf
 
-## 📝 Catatan Penggunaan
+## 📝 Usage Notes
 
-- Untuk hasil deteksi terbaik, gunakan gambar dengan pencahayaan yang baik
-- Gambar harus jelas dan fokus pada daun stroberi
-- Batas ukuran unggahan gambar: 5MB
-- Format gambar yang didukung: JPG, PNG, GIF
+- For best detection results, use images with good lighting
+- Images should be clear and focused on strawberry leaves
+- Image upload size limit: 5MB
+- Supported image formats: JPG, PNG, GIF
 
-## 👥 Kontribusi
+## 👥 Contribution
 
-Kontribusi untuk meningkatkan Strobika sangat diapresiasi! Jika Anda ingin berkontribusi:
+Contributions to improve Strobika are highly appreciated! If you'd like to contribute:
 
-1. Fork repositori
-2. Buat branch fitur (`git checkout -b feature/AmazingFeature`)
-3. Commit perubahan Anda (`git commit -m 'Add some AmazingFeature'`)
-4. Push ke branch (`git push origin feature/AmazingFeature`)
-5. Buka Pull Request
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-## 📄 Lisensi
+## 📄 License
 
-Didistribusikan di bawah Lisensi MIT. Lihat `LICENSE` untuk informasi lebih lanjut.
+Distributed under the MIT License. See `LICENSE` for more information.
 
-## 📞 Kontak
+## 📞 Contact
 
-Nama Proyek: Strobika - Sistem Deteksi Penyakit Daun Stroberi  
+Project Name: Strobika - Strawberry Leaf Disease Detection System  
 Email: sincanmaulanaa@gmail.com
+
+---
+
+Made with ❤️ for strawberry farmers and the agricultural community
