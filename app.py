@@ -7,6 +7,7 @@ from werkzeug.utils import secure_filename
 import base64
 from PIL import Image
 from io import BytesIO
+import time
 
 load_dotenv()
 
@@ -104,24 +105,52 @@ def realtime_detect():
     header, encoded = data.split(",", 1)
     img_bytes = base64.b64decode(encoded)
     img = Image.open(BytesIO(img_bytes))
-    img_path = os.path.join(app.config['UPLOAD_FOLDER'], 'webcam.jpg')
+    
+    # Save the image with a unique filename
+    filename = f'webcam_{int(time.time())}.jpg'
+    img_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     img.save(img_path)
+    
+    # Save a copy to results folder
+    result_img_path = os.path.join(app.config['RESULT_FOLDER'], filename)
+    img.save(result_img_path)
 
+    # Run detection on the image
     results = model(img_path)
+    
     if results and results[0].boxes:
         labels = [model.model.names[int(cls)] for cls in results[0].boxes.cls]
         confs = [float(conf) for conf in results[0].boxes.conf]
         boxes = results[0].boxes.xyxy.cpu().numpy().tolist()
+        
+        # Draw detection results on the image
+        results[0].save(result_img_path)
+        
+        # For template display (relative path)
+        result_img = f'results/{filename}'
+        
+        # Combine detection info
         detections = [
             {'label': label, 'confidence': conf, 'box': box}
             for label, conf, box in zip(labels, confs, boxes)
         ]
         result = ', '.join(labels)
     else:
-        detections = []
         result = 'Tidak terdeteksi penyakit pada gambar.'
-
-    return jsonify({'result': result, 'detections': detections})
+        result_img = f'results/{filename}'  # Still show the original image
+        detections = []
+    
+    # Store detection results in session for the detection page
+    session['detection_results'] = {
+        'result': result,
+        'result_img': result_img,
+        'detections': detections,
+        'original_filename': 'Gambar dari Webcam',
+        'source': 'realtime'
+    }
+    
+    # Return URL to redirect to instead of JSON
+    return jsonify({'redirect': url_for('detection')})
 
 @app.route('/chatbot', methods=['POST'])
 def chatbot():

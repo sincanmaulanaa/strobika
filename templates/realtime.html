@@ -123,11 +123,7 @@
     <script>
       const video = document.getElementById('video');
       const canvas = document.getElementById('canvas');
-      const resultDiv = document.getElementById('result');
-      const tableDiv = document.getElementById('deteksi-table');
       const loadingIndicator = document.getElementById('loading-indicator');
-      const resultsContainer = document.getElementById('results-container');
-      const deteksiCard = document.getElementById('deteksi-card');
 
       // Akses webcam
       navigator.mediaDevices
@@ -142,7 +138,6 @@
       function captureAndDetect() {
         // Show loading indicator
         loadingIndicator.style.display = 'flex';
-        resultsContainer.style.display = 'none';
 
         // Capture image
         canvas.width = video.videoWidth;
@@ -160,64 +155,13 @@
         })
           .then((res) => res.json())
           .then((data) => {
-            // Hide loading indicator
-            loadingIndicator.style.display = 'none';
-
-            // Show results
-            resultsContainer.style.display = 'flex';
-            resultsContainer.style.flexDirection = 'column';
-            resultsContainer.style.gap = '35px';
-
-            // Update result text
-            resultDiv.textContent = data.result;
-
-            // Create table if detections exist
-            if (data.detections && data.detections.length > 0) {
-              deteksiCard.style.display = 'block';
-
-              let tableHTML = `
-                <table class="deteksi-table">
-                  <thead>
-                    <tr>
-                      <th>Label</th>
-                      <th>Akurasi</th>
-                      <th>Bounding Box</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-              `;
-
-              data.detections.forEach((det) => {
-                tableHTML += `
-                  <tr>
-                    <td><span class="label-pill">${det.label}</span></td>
-                    <td>
-                      <div class="accuracy-wrapper">
-                        <div class="accuracy-bar" style="width: ${
-                          det.confidence * 100
-                        }%"></div>
-                        <span class="accuracy-text">${(
-                          det.confidence * 100
-                        ).toFixed(1)}%</span>
-                      </div>
-                    </td>
-                    <td class="bounding-box-cell">
-                      <span class="bounding-box-value">[${det.box
-                        .map((x) => Math.round(x))
-                        .join(', ')}]</span>
-                    </td>
-                  </tr>
-                `;
-              });
-
-              tableHTML += `
-                  </tbody>
-                </table>
-              `;
-
-              tableDiv.innerHTML = tableHTML;
+            if (data.redirect) {
+              // Redirect to the detection page
+              window.location.href = data.redirect;
             } else {
-              deteksiCard.style.display = 'none';
+              // Handle error case
+              loadingIndicator.style.display = 'none';
+              alert('Terjadi kesalahan dalam memproses gambar.');
             }
           })
           .catch((error) => {
