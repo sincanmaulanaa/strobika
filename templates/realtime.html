@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Deteksi Realtime - Strobika</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+  </head>
+  <body>
+    <!-- navbar with logo -->
+    <nav class="navbar">
+      <div class="navbar-container">
+        <a href="/" class="logo-container">
+          <img
+            src="{{ url_for('static', filename='images/logo.png') }}"
+            alt="Strobika Logo"
+            class="logo"
+          />
+          <span class="logo-text">Strobika</span>
+        </a>
+      </div>
+    </nav>
+
+    <div class="hero">
+      <div class="hero-content">
+        <h1>Deteksi Realtime</h1>
+        <p class="hero-description">
+          Identifikasi penyakit tanaman secara langsung menggunakan webcam Anda
+        </p>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="breadcrumb">
+        <a href="/" class="breadcrumb-link"
+          ><i class="fas fa-home"></i> Beranda</a
+        >
+        <span class="breadcrumb-separator"
+          ><i class="fas fa-chevron-right"></i
+        ></span>
+        <span class="breadcrumb-current">Deteksi Realtime</span>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <i class="fas fa-camera card-icon"></i>
+          <h2>Webcam Realtime</h2>
+        </div>
+        <div class="card-body">
+          <div class="webcam-container">
+            <video id="video" autoplay class="webcam-video"></video>
+            <canvas id="canvas" style="display: none"></canvas>
+          </div>
+          <button
+            onclick="captureAndDetect()"
+            class="submit-button capture-button"
+          >
+            <i class="fas fa-camera"></i> Deteksi Sekarang
+          </button>
+
+          <div
+            id="loading-indicator"
+            class="loading-indicator"
+            style="display: none"
+          >
+            <div class="spinner"></div>
+            <span>Mendeteksi...</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="results-container" style="display: none">
+        <div class="card result-card">
+          <div class="card-header">
+            <i class="fas fa-check-circle card-icon"></i>
+            <h2>Hasil Deteksi</h2>
+          </div>
+          <div class="card-body">
+            <div class="result">
+              <div class="result-label">Terdeteksi:</div>
+              <div id="result" class="result-value">-</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="deteksi-card" class="card" style="display: none">
+          <div class="card-header">
+            <i class="fas fa-table card-icon"></i>
+            <h2>Detail Deteksi</h2>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <div id="deteksi-table"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-buttons">
+        <a href="/" class="back-button">
+          <i class="fas fa-arrow-left"></i> Kembali ke Beranda
+        </a>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <p>&copy; 2025 Strobika - Sistem Deteksi Penyakit Stroberi</p>
+    </footer>
+
+    <script>
+      const video = document.getElementById('video');
+      const canvas = document.getElementById('canvas');
+      const resultDiv = document.getElementById('result');
+      const tableDiv = document.getElementById('deteksi-table');
+      const loadingIndicator = document.getElementById('loading-indicator');
+      const resultsContainer = document.getElementById('results-container');
+      const deteksiCard = document.getElementById('deteksi-card');
+
+      // Akses webcam
+      navigator.mediaDevices
+        .getUserMedia({ video: true })
+        .then((stream) => {
+          video.srcObject = stream;
+        })
+        .catch((err) => {
+          alert('Tidak bisa mengakses webcam: ' + err);
+        });
+
+      function captureAndDetect() {
+        // Show loading indicator
+        loadingIndicator.style.display = 'flex';
+        resultsContainer.style.display = 'none';
+
+        // Capture image
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas
+          .getContext('2d')
+          .drawImage(video, 0, 0, canvas.width, canvas.height);
+        const dataURL = canvas.toDataURL('image/jpeg');
+
+        // Send to server
+        fetch('/realtime_detect', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: dataURL }),
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            // Hide loading indicator
+            loadingIndicator.style.display = 'none';
+
+            // Show results
+            resultsContainer.style.display = 'flex';
+            resultsContainer.style.flexDirection = 'column';
+            resultsContainer.style.gap = '35px';
+
+            // Update result text
+            resultDiv.textContent = data.result;
+
+            // Create table if detections exist
+            if (data.detections && data.detections.length > 0) {
+              deteksiCard.style.display = 'block';
+
+              let tableHTML = `
+                <table class="deteksi-table">
+                  <thead>
+                    <tr>
+                      <th>Label</th>
+                      <th>Akurasi</th>
+                      <th>Bounding Box</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+              `;
+
+              data.detections.forEach((det) => {
+                tableHTML += `
+                  <tr>
+                    <td><span class="label-pill">${det.label}</span></td>
+                    <td>
+                      <div class="accuracy-wrapper">
+                        <div class="accuracy-bar" style="width: ${
+                          det.confidence * 100
+                        }%"></div>
+                        <span class="accuracy-text">${(
+                          det.confidence * 100
+                        ).toFixed(1)}%</span>
+                      </div>
+                    </td>
+                    <td class="bounding-box-cell">
+                      <span class="bounding-box-value">[${det.box
+                        .map((x) => Math.round(x))
+                        .join(', ')}]</span>
+                    </td>
+                  </tr>
+                `;
+              });
+
+              tableHTML += `
+                  </tbody>
+                </table>
+              `;
+
+              tableDiv.innerHTML = tableHTML;
+            } else {
+              deteksiCard.style.display = 'none';
+            }
+          })
+          .catch((error) => {
+            loadingIndicator.style.display = 'none';
+            alert('Terjadi kesalahan: ' + error.message);
+          });
+      }
+    </script>
+
+    <style>
+      /* Additional styles specific to the realtime page */
+      .webcam-container {
+        width: 100%;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+        border: 1px solid rgba(0, 0, 0, 0.03);
+        margin-bottom: 25px;
+        background: #000;
+      }
+
+      .webcam-video {
+        display: block;
+        width: 100%;
+        height: auto;
+        max-height: 500px;
+        object-fit: cover;
+      }
+
+      .capture-button {
+        width: 100%;
+      }
+
+      .loading-indicator {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 15px;
+        margin: 30px 0;
+        color: var(--primary-dark);
+        font-weight: 500;
+      }
+
+      .spinner {
+        width: 30px;
+        height: 30px;
+        border: 3px solid rgba(82, 149, 106, 0.2);
+        border-top: 3px solid var(--primary);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      #results-container {
+        animation: fadeIn 0.6s ease-out;
+      }
+
+      @media (max-width: 768px) {
+        .webcam-video {
+          max-height: 350px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .webcam-video {
+          max-height: 250px;
+        }
+      }
+    </style>
+  </body>
+</html>

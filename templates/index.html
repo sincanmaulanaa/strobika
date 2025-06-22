@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Deteksi Penyakit Daun Stroberi</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+  </head>
+  <body>
+    <!-- navbar with logo -->
+    <nav class="navbar">
+      <div class="navbar-container">
+        <a href="/" class="logo-container">
+          <img
+            src="{{ url_for('static', filename='images/logo.png') }}"
+            alt="Strobika Logo"
+            class="logo"
+          />
+          <span class="logo-text">Strobika</span>
+        </a>
+      </div>
+    </nav>
+
+    <div class="hero">
+      <div class="hero-content">
+        <h1>Deteksi Penyakit Daun Stroberi</h1>
+        <p class="hero-description">
+          Identifikasi penyakit daun stroberi dengan cepat dan akurat
+          menggunakan teknologi AI
+        </p>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="card">
+        <div class="card-header">
+          <i class="fas fa-leaf card-icon"></i>
+          <h2>Upload Gambar</h2>
+        </div>
+        <div class="card-body">
+          <form
+            action="/deteksi"
+            method="post"
+            enctype="multipart/form-data"
+            class="upload-form"
+          >
+            <div class="file-upload-wrapper">
+              <label for="image" class="file-upload-label">
+                <div class="upload-icon">
+                  <i class="fas fa-cloud-upload-alt"></i>
+                </div>
+                <div class="upload-text">
+                  <span class="primary-text"
+                    >Pilih file atau seret ke sini</span
+                  >
+                  <span class="secondary-text"
+                    >Format: JPG, PNG, GIF (Maks. 5MB)</span
+                  >
+                </div>
+              </label>
+              <input
+                type="file"
+                id="image"
+                name="image"
+                accept="image/*"
+                required
+                class="file-upload-input"
+              />
+            </div>
+            <button type="submit" class="submit-button">
+              <i class="fas fa-search"></i> Deteksi
+            </button>
+          </form>
+
+          <div class="option-divider">
+            <span>atau</span>
+          </div>
+
+          <a href="{{ url_for('realtime') }}" class="realtime-link">
+            <i class="fas fa-camera"></i> Deteksi Realtime dengan Webcam
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <p>&copy; 2025 Strobika - Sistem Deteksi Penyakit Stroberi</p>
+    </footer>
+
+    <script>
+      // Simple file upload preview script
+      document.addEventListener('DOMContentLoaded', function () {
+        const fileInput = document.getElementById('image');
+        const fileLabel = document.querySelector('.file-upload-label');
+
+        fileInput.addEventListener('change', function () {
+          if (this.files && this.files[0]) {
+            const fileName = this.files[0].name;
+            const uploadText = fileLabel.querySelector('.primary-text');
+            uploadText.textContent = fileName;
+            fileLabel.classList.add('has-file');
+          }
+        });
+
+        // drag and drop functionality
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach((eventName) => {
+          fileLabel.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach((eventName) => {
+          fileLabel.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach((eventName) => {
+          fileLabel.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight() {
+          fileLabel.classList.add('highlight');
+        }
+
+        function unhighlight() {
+          fileLabel.classList.remove('highlight');
+        }
+
+        fileLabel.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+          const dt = e.dataTransfer;
+          const files = dt.files;
+          fileInput.files = files;
+
+          if (files && files[0]) {
+            const fileName = files[0].name;
+            const uploadText = fileLabel.querySelector('.primary-text');
+            uploadText.textContent = fileName;
+            fileLabel.classList.add('has-file');
+          }
+        }
+      });
+    </script>
+  </body>
+</html>

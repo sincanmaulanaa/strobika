@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hasil Deteksi - Strobika</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/markdown-it@12.0.6/dist/markdown-it.min.js"></script>
+  </head>
+  <body>
+    <nav class="navbar">
+      <div class="navbar-container">
+        <a href="/" class="logo-container">
+          <img
+            src="{{ url_for('static', filename='images/logo.png') }}"
+            alt="Strobika Logo"
+            class="logo"
+          />
+          <span class="logo-text">Strobika</span>
+        </a>
+      </div>
+    </nav>
+
+    <div class="hero result-hero">
+      <div class="hero-content">
+        <h1>Hasil Deteksi</h1>
+        <p class="hero-description">
+          Hasil analisis gambar menggunakan teknologi AI
+        </p>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="breadcrumb">
+        <a href="/" class="breadcrumb-link"
+          ><i class="fas fa-home"></i> Beranda</a
+        >
+        <span class="breadcrumb-separator"
+          ><i class="fas fa-chevron-right"></i
+        ></span>
+        <span class="breadcrumb-current">Hasil Deteksi</span>
+      </div>
+
+      <div class="results-section">
+        <div class="card result-card">
+          <div class="card-header">
+            <i class="fas fa-check-circle card-icon"></i>
+            <h2>Hasil Deteksi</h2>
+          </div>
+          <div class="card-body">
+            {% if result_img %}
+            <div class="preview">
+              <h3>Preview Hasil:</h3>
+              <div class="image-container">
+                <img
+                  src="{{ url_for('static', filename=result_img) }}"
+                  alt="Hasil Deteksi"
+                />
+              </div>
+              <div class="image-details">
+                <span class="file-name">{{ original_filename }}</span>
+              </div>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+
+        {% if detections and detections|length > 0 %}
+        <div class="card">
+          <div class="card-header">
+            <i class="fas fa-table card-icon"></i>
+            <h2>Detail Deteksi</h2>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="deteksi-table">
+                <thead>
+                  <tr>
+                    <th>Label</th>
+                    <th>Akurasi</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for det in detections %}
+                  <tr>
+                    <td><span class="label-pill">{{ det.label }}</span></td>
+                    <td>
+                      <div class="accuracy-wrapper">
+                        <div
+                          class="accuracy-bar"
+                          style="width: {{ (det.confidence * 100) }}%"
+                        ></div>
+                        <span class="accuracy-text"
+                          >{{ (det.confidence * 100) | round(1) }}%</span
+                        >
+                      </div>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="action-buttons">
+        <a href="/" class="back-button">
+          <i class="fas fa-arrow-left"></i> Kembali ke Beranda
+        </a>
+        <a href="javascript:window.print()" class="print-button">
+          <i class="fas fa-print"></i> Cetak Hasil
+        </a>
+      </div>
+
+      <!-- chatbot toggle button -->
+      <button id="chatbot-toggle" class="chatbot-toggle">
+        <i class="fas fa-comments"></i>
+        <span>Tanya AI tentang penyakit</span>
+      </button>
+
+      <!-- chatbot interface -->
+      <div id="chatbot-container" class="chatbot-container">
+        <div class="chatbot-header">
+          <h3><i class="fas fa-robot"></i> Asisten Strobika</h3>
+          <button id="close-chatbot" class="close-chatbot">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div id="chatbot-messages" class="chatbot-messages">
+          <div class="bot-message">
+            <div class="message-content">
+              Halo! Saya asisten Strobika. Tanyakan pada saya tentang penyakit
+              "{{ result }}" atau informasi lainnya seputar penyakit tanaman
+              stroberi.
+            </div>
+          </div>
+        </div>
+        <div class="chatbot-input">
+          <input
+            type="text"
+            id="user-message"
+            placeholder="Tulis pesan..."
+            autocomplete="off"
+          />
+          <button id="send-message">
+            <i class="fas fa-paper-plane"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <p>&copy; 2025 Strobika - Sistem Deteksi Penyakit Stroberi</p>
+    </footer>
+
+    <!-- chatbot JavaScript -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        const chatbotToggle = document.getElementById('chatbot-toggle');
+        const chatbotContainer = document.getElementById('chatbot-container');
+        const closeButton = document.getElementById('close-chatbot');
+        const sendButton = document.getElementById('send-message');
+        const userInput = document.getElementById('user-message');
+        const messagesContainer = document.getElementById('chatbot-messages');
+        const detectedDisease = '{{ result }}';
+
+        // Initialize markdown parser
+        const md = window.markdownit();
+
+        // Toggle chatbot visibility
+        chatbotToggle.addEventListener('click', function () {
+          chatbotContainer.classList.add('open');
+        });
+
+        closeButton.addEventListener('click', function () {
+          chatbotContainer.classList.remove('open');
+        });
+
+        // Send message when clicking the send button
+        sendButton.addEventListener('click', sendMessage);
+
+        // Send message when pressing Enter in the input field
+        userInput.addEventListener('keypress', function (e) {
+          if (e.key === 'Enter') {
+            sendMessage();
+          }
+        });
+
+        function sendMessage() {
+          const message = userInput.value.trim();
+          if (message === '') return;
+
+          // user message to the chat
+          addMessage(message, 'user');
+
+          // Clear input field
+          userInput.value = '';
+
+          // loading indicator
+          const loadingId = addLoadingMessage();
+
+          // Send message to the backend
+          fetch('/chatbot', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              message: message,
+              disease: detectedDisease,
+            }),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              // Remove loading indicator
+              removeLoadingMessage(loadingId);
+
+              // bot response to the chat
+              if (data.error) {
+                addMessage(
+                  'Maaf, terjadi kesalahan. Silakan coba lagi nanti.',
+                  'bot'
+                );
+              } else {
+                addMessage(data.response, 'bot');
+              }
+
+              // Scroll to the bottom
+              messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            })
+            .catch((error) => {
+              // Remove loading indicator
+              removeLoadingMessage(loadingId);
+
+              // Show error message
+              addMessage(
+                'Maaf, terjadi kesalahan koneksi. Silakan coba lagi nanti.',
+                'bot'
+              );
+              console.error('Error:', error);
+            });
+        }
+
+        function addMessage(message, sender) {
+          const messageDiv = document.createElement('div');
+          messageDiv.classList.add(
+            sender === 'user' ? 'user-message' : 'bot-message'
+          );
+
+          const messageContent = document.createElement('div');
+          messageContent.classList.add('message-content');
+
+          // For bot messages, render markdown. For user messages, just use text
+          if (sender === 'bot') {
+            messageContent.innerHTML = md.render(message);
+          } else {
+            messageContent.textContent = message;
+          }
+
+          messageDiv.appendChild(messageContent);
+          messagesContainer.appendChild(messageDiv);
+          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function addLoadingMessage() {
+          const loadingId = 'loading-' + Date.now();
+          const loadingDiv = document.createElement('div');
+          loadingDiv.classList.add('bot-message');
+          loadingDiv.id = loadingId;
+
+          const loadingContent = document.createElement('div');
+          loadingContent.classList.add('message-content', 'loading');
+          loadingContent.innerHTML = '<div class="dot-typing"></div>';
+
+          loadingDiv.appendChild(loadingContent);
+          messagesContainer.appendChild(loadingDiv);
+          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+          return loadingId;
+        }
+
+        function removeLoadingMessage(id) {
+          const loadingElement = document.getElementById(id);
+          if (loadingElement) {
+            loadingElement.remove();
+          }
+        }
+      });
+    </script>
+  </body>
+</html>
