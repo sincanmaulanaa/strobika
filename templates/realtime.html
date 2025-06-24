@@ -62,14 +62,37 @@
         <div class="card-body">
           <div class="webcam-container">
             <video id="video" autoplay class="webcam-video"></video>
-            <canvas id="canvas" style="display: none"></canvas>
+            <canvas id="overlay" class="webcam-overlay"></canvas>
           </div>
-          <button
-            onclick="captureAndDetect()"
-            class="submit-button capture-button"
-          >
-            <i class="fas fa-camera"></i> Deteksi Sekarang
-          </button>
+
+          <div class="controls">
+            <button id="startButton" class="control-button start-button">
+              <i class="fas fa-play"></i> Mulai Deteksi Realtime
+            </button>
+            <button
+              id="stopButton"
+              class="control-button stop-button"
+              style="display: none"
+            >
+              <i class="fas fa-stop"></i> Hentikan Deteksi
+            </button>
+            <button id="captureButton" class="control-button capture-button">
+              <i class="fas fa-camera"></i> Ambil Gambar
+            </button>
+          </div>
+
+          <div id="detection-info" class="detection-info">
+            <div class="info-item">
+              <span class="info-label">Status:</span>
+              <span id="status" class="info-value">Tidak aktif</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Terdeteksi:</span>
+              <span id="detected" class="info-value">-</span>
+            </div>
+          </div>
+
+          <canvas id="canvas" style="display: none"></canvas>
 
           <div
             id="loading-indicator"
@@ -78,33 +101,6 @@
           >
             <div class="spinner"></div>
             <span>Mendeteksi...</span>
-          </div>
-        </div>
-      </div>
-
-      <div id="results-container" style="display: none">
-        <div class="card result-card">
-          <div class="card-header">
-            <i class="fas fa-check-circle card-icon"></i>
-            <h2>Hasil Deteksi</h2>
-          </div>
-          <div class="card-body">
-            <div class="result">
-              <div class="result-label">Terdeteksi:</div>
-              <div id="result" class="result-value">-</div>
-            </div>
-          </div>
-        </div>
-
-        <div id="deteksi-card" class="card" style="display: none">
-          <div class="card-header">
-            <i class="fas fa-table card-icon"></i>
-            <h2>Detail Deteksi</h2>
-          </div>
-          <div class="card-body">
-            <div class="table-responsive">
-              <div id="deteksi-table"></div>
-            </div>
           </div>
         </div>
       </div>
@@ -123,56 +119,245 @@
     <script>
       const video = document.getElementById('video');
       const canvas = document.getElementById('canvas');
+      const overlay = document.getElementById('overlay');
+      const startButton = document.getElementById('startButton');
+      const stopButton = document.getElementById('stopButton');
+      const captureButton = document.getElementById('captureButton');
+      const statusElement = document.getElementById('status');
+      const detectedElement = document.getElementById('detected');
       const loadingIndicator = document.getElementById('loading-indicator');
 
-      // Akses webcam
-      navigator.mediaDevices
-        .getUserMedia({ video: true })
-        .then((stream) => {
+      let stream;
+      let isDetecting = false;
+      let detectInterval;
+      const DETECTION_INTERVAL = 500; // Detect every 500ms
+      const COLORS = {
+        'Bercak Daun': '#FF5733',
+        'Embun Tepung': '#33A1FF',
+        'Karat Daun': '#FF33E9',
+        'Busuk Abu-abu': '#A233FF',
+        'Daun Sehat': '#33FF57',
+      };
+
+      // Setup the overlay canvas to match the video dimensions
+      function setupOverlay() {
+        const videoContainer = document.querySelector('.webcam-container');
+        overlay.width = videoContainer.offsetWidth;
+        overlay.height = videoContainer.offsetHeight;
+
+        // Position the overlay on top of the video
+        overlay.style.position = 'absolute';
+        overlay.style.top = '0';
+        overlay.style.left = '0';
+      }
+
+      // Initialize webcam
+      async function initWebcam() {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+              facingMode: 'environment', // Prefer back camera on mobile
+            },
+          });
+
           video.srcObject = stream;
-        })
-        .catch((err) => {
-          alert('Tidak bisa mengakses webcam: ' + err);
-        });
 
-      function captureAndDetect() {
-        // Show loading indicator
-        loadingIndicator.style.display = 'flex';
+          // Wait for video to be loaded
+          video.onloadedmetadata = () => {
+            setupOverlay();
+          };
 
-        // Capture image
+          // Handle window resize
+          window.addEventListener('resize', setupOverlay);
+        } catch (err) {
+          alert('Tidak bisa mengakses webcam: ' + err.message);
+        }
+      }
+
+      // Start real-time detection
+      function startRealTimeDetection() {
+        if (isDetecting) return;
+
+        isDetecting = true;
+        statusElement.textContent = 'Aktif';
+        statusElement.classList.add('active');
+        startButton.style.display = 'none';
+        stopButton.style.display = 'block';
+
+        // Start detection loop
+        detectInterval = setInterval(detectFrame, DETECTION_INTERVAL);
+      }
+
+      // Stop real-time detection
+      function stopRealTimeDetection() {
+        if (!isDetecting) return;
+
+        isDetecting = false;
+        statusElement.textContent = 'Tidak aktif';
+        statusElement.classList.remove('active');
+        startButton.style.display = 'block';
+        stopButton.style.display = 'none';
+
+        // Clear detection loop
+        clearInterval(detectInterval);
+
+        // Clear overlay
+        const ctx = overlay.getContext('2d');
+        ctx.clearRect(0, 0, overlay.width, overlay.height);
+
+        detectedElement.textContent = '-';
+      }
+
+      // Capture current frame and detect objects
+      async function detectFrame() {
+        if (!isDetecting) return;
+
+        // Draw the current video frame to the hidden canvas
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
-        canvas
-          .getContext('2d')
-          .drawImage(video, 0, 0, canvas.width, canvas.height);
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        // Convert canvas to data URL
+        const dataURL = canvas.toDataURL('image/jpeg', 0.8);
+
+        try {
+          // Send to server for detection
+          const response = await fetch('/realtime_detect_continuous', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image: dataURL }),
+          });
+
+          const data = await response.json();
+
+          // Process and display detection results
+          drawDetections(data.detections);
+
+          // Update detected labels
+          if (data.detections && data.detections.length > 0) {
+            const labels = [...new Set(data.detections.map((d) => d.label))];
+            detectedElement.textContent = labels.join(', ');
+          } else {
+            detectedElement.textContent = 'Tidak ada penyakit terdeteksi';
+          }
+        } catch (error) {
+          console.error('Detection error:', error);
+        }
+      }
+
+      // Draw bounding boxes and labels on the overlay
+      function drawDetections(detections) {
+        const overlayCtx = overlay.getContext('2d');
+
+        // Clear previous drawings
+        overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
+
+        if (!detections || detections.length === 0) return;
+
+        // Calculate scale factors between video and overlay
+        const scaleX = overlay.width / video.videoWidth;
+        const scaleY = overlay.height / video.videoHeight;
+
+        detections.forEach((detection) => {
+          const [x1, y1, x2, y2] = detection.box;
+          const scaledX = x1 * scaleX;
+          const scaledY = y1 * scaleY;
+          const scaledWidth = (x2 - x1) * scaleX;
+          const scaledHeight = (y2 - y1) * scaleY;
+
+          const label = detection.label;
+          const confidence = (detection.confidence * 100).toFixed(1);
+          const color = COLORS[label] || '#FF0000';
+
+          // Draw bounding box
+          overlayCtx.strokeStyle = color;
+          overlayCtx.lineWidth = 3;
+          overlayCtx.strokeRect(scaledX, scaledY, scaledWidth, scaledHeight);
+
+          // Draw background for label
+          overlayCtx.fillStyle = color;
+          const textWidth = overlayCtx.measureText(
+            `${label} ${confidence}%`
+          ).width;
+          overlayCtx.fillRect(scaledX, scaledY - 25, textWidth + 10, 25);
+
+          // Draw label text
+          overlayCtx.fillStyle = '#FFFFFF';
+          overlayCtx.font = 'bold 14px Poppins';
+          overlayCtx.fillText(
+            `${label} ${confidence}%`,
+            scaledX + 5,
+            scaledY - 7
+          );
+        });
+      }
+
+      // Capture and save a specific frame
+      async function captureAndSave() {
+        loadingIndicator.style.display = 'flex';
+
+        // Pause detection temporarily
+        const wasDetecting = isDetecting;
+        if (wasDetecting) {
+          stopRealTimeDetection();
+        }
+
+        // Draw the current video frame to the hidden canvas
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        // Convert canvas to data URL
         const dataURL = canvas.toDataURL('image/jpeg');
 
-        // Send to server
-        fetch('/realtime_detect', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ image: dataURL }),
-        })
-          .then((res) => res.json())
-          .then((data) => {
-            if (data.redirect) {
-              // Redirect to the detection page
-              window.location.href = data.redirect;
-            } else {
-              // Handle error case
-              loadingIndicator.style.display = 'none';
-              alert('Terjadi kesalahan dalam memproses gambar.');
-            }
-          })
-          .catch((error) => {
-            loadingIndicator.style.display = 'none';
-            alert('Terjadi kesalahan: ' + error.message);
+        try {
+          // Send to server for saving and full detection
+          const response = await fetch('/realtime_detect', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image: dataURL }),
           });
+
+          const data = await response.json();
+
+          // Redirect to the detection results page
+          if (data.redirect) {
+            window.location.href = data.redirect;
+          } else {
+            loadingIndicator.style.display = 'none';
+            alert('Terjadi kesalahan dalam memproses gambar.');
+
+            // Resume detection if it was active
+            if (wasDetecting) {
+              startRealTimeDetection();
+            }
+          }
+        } catch (error) {
+          loadingIndicator.style.display = 'none';
+          alert('Terjadi kesalahan: ' + error.message);
+
+          // Resume detection if it was active
+          if (wasDetecting) {
+            startRealTimeDetection();
+          }
+        }
       }
+
+      // Event listeners
+      startButton.addEventListener('click', startRealTimeDetection);
+      stopButton.addEventListener('click', stopRealTimeDetection);
+      captureButton.addEventListener('click', captureAndSave);
+
+      // Initialize on page load
+      initWebcam();
     </script>
 
     <style>
-      /* Additional styles specific to the realtime page */
+      /* Additional styles for the realtime page */
       .webcam-container {
         width: 100%;
         border-radius: 15px;
@@ -181,6 +366,7 @@
         border: 1px solid rgba(0, 0, 0, 0.03);
         margin-bottom: 25px;
         background: #000;
+        position: relative;
       }
 
       .webcam-video {
@@ -191,8 +377,103 @@
         object-fit: cover;
       }
 
-      .capture-button {
+      .webcam-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
         width: 100%;
+        height: 100%;
+        pointer-events: none;
+      }
+
+      .controls {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+      }
+
+      .control-button {
+        flex: 1;
+        min-width: 120px;
+        padding: 14px 20px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        font-family: 'Poppins', sans-serif;
+        font-weight: 600;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: var(--transition);
+        border: none;
+      }
+
+      .start-button {
+        background: linear-gradient(90deg, #52956a 0%, #3c6d4e 100%);
+        color: white;
+        box-shadow: 0 4px 12px rgba(60, 109, 78, 0.2);
+      }
+
+      .start-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(60, 109, 78, 0.3);
+      }
+
+      .stop-button {
+        background: linear-gradient(90deg, #e05252 0%, #c43e3e 100%);
+        color: white;
+        box-shadow: 0 4px 12px rgba(224, 82, 82, 0.2);
+      }
+
+      .stop-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(224, 82, 82, 0.3);
+      }
+
+      .capture-button {
+        background: linear-gradient(90deg, #4a66d5 0%, #3751b5 100%);
+        color: white;
+        box-shadow: 0 4px 12px rgba(74, 102, 213, 0.2);
+      }
+
+      .capture-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(74, 102, 213, 0.3);
+      }
+
+      .detection-info {
+        background: #f5f9fa;
+        border-radius: 12px;
+        padding: 15px 20px;
+        margin-bottom: 20px;
+        border: 1px solid rgba(0, 0, 0, 0.03);
+      }
+
+      .info-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+
+      .info-item:last-child {
+        margin-bottom: 0;
+      }
+
+      .info-label {
+        font-weight: 600;
+        color: var(--text-light);
+        min-width: 100px;
+      }
+
+      .info-value {
+        color: var(--text-dark);
+        font-weight: 500;
+      }
+
+      .info-value.active {
+        color: var(--success);
       }
 
       .loading-indicator {
@@ -223,13 +504,17 @@
         }
       }
 
-      #results-container {
-        animation: fadeIn 0.6s ease-out;
-      }
-
       @media (max-width: 768px) {
         .webcam-video {
           max-height: 350px;
+        }
+
+        .controls {
+          flex-direction: column;
+        }
+
+        .control-button {
+          width: 100%;
         }
       }
 

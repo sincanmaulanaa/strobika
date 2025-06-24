@@ -8,6 +8,7 @@ import base64
 from PIL import Image
 from io import BytesIO
 import time
+import numpy as np
 
 load_dotenv()
 
@@ -151,6 +152,39 @@ def realtime_detect():
     
     # Return URL to redirect to instead of JSON
     return jsonify({'redirect': url_for('detection')})
+
+@app.route('/realtime_detect_continuous', methods=['POST'])
+def realtime_detect_continuous():
+    data = request.json['image']
+    header, encoded = data.split(",", 1)
+    img_bytes = base64.b64decode(encoded)
+    img = Image.open(BytesIO(img_bytes))
+    
+    # Process image without saving to disk for faster response
+    # Convert PIL Image to numpy array for detection
+    img_array = np.array(img)
+    
+    # Run detection on the image
+    results = model(img_array)
+    
+    detection_results = []
+    
+    if results and results[0].boxes:
+        boxes = results[0].boxes.xyxy.cpu().numpy().tolist()
+        labels = [model.model.names[int(cls)] for cls in results[0].boxes.cls]
+        confs = [float(conf) for conf in results[0].boxes.conf]
+        
+        # Format results for JSON response
+        for label, conf, box in zip(labels, confs, boxes):
+            detection_results.append({
+                'label': label,
+                'confidence': conf,
+                'box': box
+            })
+    
+    return jsonify({
+        'detections': detection_results
+    })
 
 @app.route('/chatbot', methods=['POST'])
 def chatbot():
