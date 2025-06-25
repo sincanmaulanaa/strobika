@@ -81,7 +81,7 @@ Thumbs.db
 
 # Large model files (if you decide to not track them)
 # Comment out if you want to include models in your repository
-*.pt
+model.pt
 # *.pth
 # *.h5
 # *.hdf5
