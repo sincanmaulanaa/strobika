@@ -9,18 +9,32 @@ from PIL import Image
 from io import BytesIO
 import time
 import numpy as np
+from werkzeug.middleware.proxy_fix import ProxyFix
+
+
+print("🔥 Mulai eksekusi app.py")
 
 load_dotenv()
 
 app = Flask(__name__)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+
 app.secret_key = os.getenv('SECRET_KEY')
 app.config['UPLOAD_FOLDER'] = '/tmp/uploads'
-app.config['RESULT_FOLDER'] = '/tmp/results'
+app.config['RESULT_FOLDER'] = os.path.join('static', 'results')
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 os.makedirs(app.config['RESULT_FOLDER'], exist_ok=True)
 
-# Load YOLOv8 model
-model = YOLO('best.pt')
+print("📦 Cek model path:", os.path.exists("best.pt"))
+
+try:
+    print("🔍 Inisialisasi YOLO model...")
+    model = YOLO('best.pt')
+    print("✅ Model loaded")
+except Exception as e:
+    print("❌ Gagal load model:", e)
+    model = None
+
 
 # Configure Gemini API
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
@@ -56,8 +70,9 @@ def deteksi():
         result_img_path = os.path.join(app.config['RESULT_FOLDER'], filename)
         results[0].save(result_img_path)
         
-        # Untuk ditampilkan di template (relative path)
-        result_img = f'results/{filename}'
+        # Untuk ditampilkan di template (URL absolut)
+        result_img = url_for('static', filename=f'results/{filename}', _external=True)
+
         
         # Gabungkan info deteksi
         detections = [
@@ -128,7 +143,7 @@ def realtime_detect():
         results[0].save(result_img_path)
         
         # For template display (relative path)
-        result_img = f'results/{filename}'
+        result_img = url_for('static', filename=f'results/{filename}', _external=True)
         
         # Combine detection info
         detections = [
@@ -138,7 +153,9 @@ def realtime_detect():
         result = ', '.join(labels)
     else:
         result = 'Tidak terdeteksi penyakit pada gambar.'
-        result_img = f'results/{filename}'  # Still show the original image
+        # Still show the original image
+        # Untuk ditampilkan di template (URL absolut)
+        result_img = url_for('static', filename=f'results/{filename}', _external=True)
         detections = []
     
     # Store detection results in session for the detection page

@@ -1,0 +1,28 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+uploads/
+.env
+model.pt
+
+# Git
+.git
+.gitignore
+
+# Python
+*.log
+.Python
+env/
+venv/
+.env*
+
+# Editor directories and files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# System Files
+.DS_Store
+Thumbs.db

@@ -65,10 +65,7 @@
             <div class="preview">
               <h3>Preview Hasil:</h3>
               <div class="image-container">
-                <img
-                  src="{{ url_for('static', filename=result_img) }}"
-                  alt="Hasil Deteksi"
-                />
+                <img src="{{ result_img }}" alt="Hasil Deteksi" />
               </div>
               <div class="image-details">
                 <span class="file-name">{{ original_filename }}</span>
