@@ -224,25 +224,8 @@ def chatbot():
     User question: {user_message}
     
     IMPORTANT CLASSIFICATION INSTRUCTIONS:
-    1. GREETINGS: If the message is a simple greeting (like "halo", "hai", "pagi", etc.), respond with a friendly greeting and brief introduction about how you can help with strawberry diseases.
     
-    2. RELEVANT QUESTIONS: If the question is related to strawberry plant diseases, farming, or plant care, provide a VERY BRIEF, direct response in Indonesian language.
-    
-    3. OFF-TOPIC: If the question is clearly unrelated to these topics (like asking about politics, entertainment, other crops, or personal questions), respond ONLY with: "Mohon maaf, saya hanya dapat menjawab pertanyaan seputar penyakit tanaman stroberi dan perawatannya."
-    
-    For GREETINGS, use a response like:
-    "Halo! Saya Strobot, asisten yang dapat membantu Anda dengan informasi tentang penyakit tanaman stroberi. Apa yang ingin Anda ketahui tentang {disease} atau perawatan stroberi?"
-    
-    For RELEVANT QUESTIONS, follow these examples:
-    Q: "Obat kimia apa yang cocok untuk penyakit ini?"
-    A: "**Fungisida yang efektif:**
-    * Difenokonazol
-    * Klorotalonil
-    * Captan
-    * Mankozeb"
-
-    Q: "Berapa hari penyakit ini hilang setelah dikasih obat tersebut?"
-    A: "2-3 minggu untuk gejala berkurang signifikan. Semprot ulang setiap 7-10 hari hingga 3 kali aplikasi untuk hasil optimal."
+    OFF-TOPIC: If the question is clearly unrelated to these topics (like asking about politics, entertainment, other crops, or personal questions), respond ONLY with: "Mohon maaf, saya hanya dapat menjawab pertanyaan seputar penyakit tanaman stroberi dan perawatannya."
     
     Examples of OFF-TOPIC questions you should NOT answer:
     - "Siapa presiden Indonesia?"
