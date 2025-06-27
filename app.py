@@ -69,6 +69,7 @@ def deteksi():
         # Simpan gambar hasil deteksi ke folder static/results
         result_img_path = os.path.join(app.config['RESULT_FOLDER'], filename)
         results[0].save(result_img_path)
+        time.sleep(1)
         
         # Untuk ditampilkan di template (URL absolut)
         result_img = url_for('static', filename=f'results/{filename}', _external=True)
@@ -102,13 +103,14 @@ def detection():
     
     if not detection_results:
         return redirect(url_for('home'))
-    
+
     return render_template(
         'detection.html',
         result=detection_results['result'],
         result_img=detection_results['result_img'],
         detections=detection_results['detections'],
-        original_filename=detection_results['original_filename']
+        original_filename=detection_results['original_filename'],
+        current_time=int(time.time())  # tambahan untuk cache-busting
     )
 
 @app.route('/realtime', methods=['GET'])
@@ -141,7 +143,8 @@ def realtime_detect():
         
         # Draw detection results on the image
         results[0].save(result_img_path)
-        
+        time.sleep(1)
+
         # For template display (relative path)
         result_img = url_for('static', filename=f'results/{filename}', _external=True)
         
