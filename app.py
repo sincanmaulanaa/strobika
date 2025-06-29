@@ -130,45 +130,44 @@ def realtime_detect():
     header, encoded = data.split(",", 1)
     img_bytes = base64.b64decode(encoded)
     img = Image.open(BytesIO(img_bytes))
-    
-    # Save the image with a unique filename
+
+    # Save original webcam image
     filename = f'webcam_{int(time.time())}.jpg'
     img_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     img.save(img_path)
-    
-    # Save a copy to results folder
-    result_img_path = os.path.join(app.config['RESULT_FOLDER'], filename)
-    img.save(result_img_path)
 
     # Run detection on the image
     results = model(img_path)
-    
+
+    result_img_path = os.path.join(app.config['RESULT_FOLDER'], filename)
+
     if results and results[0].boxes:
         labels = [model.model.names[int(cls)] for cls in results[0].boxes.cls]
         confs = [float(conf) for conf in results[0].boxes.conf]
         boxes = results[0].boxes.xyxy.cpu().numpy().tolist()
-        
-        # Draw detection results on the image
-        results[0].save(result_img_path)
-        time.sleep(1)
 
-        # For template display (relative path)
-        result_img = url_for('static', filename=f'results/{filename}', _external=True)
-        
-        # Combine detection info
+        # Save annotated image
+        results[0].save(result_img_path)
+
+        result = ', '.join(labels)
         detections = [
             {'label': label, 'confidence': conf, 'box': box}
             for label, conf, box in zip(labels, confs, boxes)
         ]
-        result = ', '.join(labels)
     else:
+        # Save original image as fallback
+        img.save(result_img_path)
         result = 'Tidak terdeteksi penyakit pada gambar.'
-        # Still show the original image
-        # Untuk ditampilkan di template (URL absolut)
-        result_img = url_for('static', filename=f'results/{filename}', _external=True)
         detections = []
-    
-    # Store detection results in session for the detection page
+
+    # ✅ Pastikan file benar-benar tersedia sebelum digunakan
+    for _ in range(10):
+        if os.path.exists(result_img_path):
+            break
+        time.sleep(0.2)
+
+    result_img = url_for('static', filename=f'results/{filename}', _external=True)
+
     session['detection_results'] = {
         'result': result,
         'result_img': result_img,
@@ -176,9 +175,9 @@ def realtime_detect():
         'original_filename': 'Gambar dari Webcam',
         'source': 'realtime'
     }
-    
-    # Return URL to redirect to instead of JSON
+
     return jsonify({'redirect': url_for('detection')})
+
 
 @app.route('/realtime_detect_continuous', methods=['POST'])
 def realtime_detect_continuous():
