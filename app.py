@@ -8,8 +8,8 @@ import base64
 from PIL import Image
 from io import BytesIO
 import time
-import numpy as np
 from werkzeug.middleware.proxy_fix import ProxyFix
+import numpy as np
 
 
 print("🔥 Mulai eksekusi app.py")
@@ -62,9 +62,17 @@ def deteksi():
     results = model(filepath)
     
     if results and results[0].boxes:
-        labels = [model.model.names[int(cls)] for cls in results[0].boxes.cls]
-        confs = [float(conf) for conf in results[0].boxes.conf]
+        # Get model names from the appropriate source
+        model_names = results.model.names if hasattr(results, 'model') else model.model.names
+        
+        # Process detections
+        cls_values = results[0].boxes.cls
+        conf_values = results[0].boxes.conf
         boxes = results[0].boxes.xyxy.cpu().numpy().tolist()
+        
+        # Generate labels
+        labels = [model_names[int(cls)] for cls in cls_values]
+        confs = [float(conf) for conf in conf_values]
         
         # Simpan gambar hasil deteksi ke folder static/results
         result_img_path = os.path.join(app.config['RESULT_FOLDER'], filename)
@@ -73,7 +81,6 @@ def deteksi():
         
         # Untuk ditampilkan di template (URL absolut)
         result_img = url_for('static', filename=f'results/{filename}', _external=True)
-
         
         # Gabungkan info deteksi
         detections = [
@@ -197,14 +204,17 @@ def realtime_detect_continuous():
     
     if results and results[0].boxes:
         boxes = results[0].boxes.xyxy.cpu().numpy().tolist()
-        labels = [model.model.names[int(cls)] for cls in results[0].boxes.cls]
-        confs = [float(conf) for conf in results[0].boxes.conf]
+        cls_values = results[0].boxes.cls
+        conf_values = results[0].boxes.conf
         
-        # Format results for JSON response
-        for label, conf, box in zip(labels, confs, boxes):
+        # Get model names from results.model.names (used in test)
+        # or model.model.names (used in production)
+        model_names = results.model.names if hasattr(results, 'model') else model.model.names
+        
+        for cls, conf, box in zip(cls_values, conf_values, boxes):
             detection_results.append({
-                'label': label,
-                'confidence': conf,
+                'label': model_names[int(cls)],
+                'confidence': float(conf),
                 'box': box
             })
     
