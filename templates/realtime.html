@@ -158,21 +158,22 @@
             video: {
               width: { ideal: 1280 },
               height: { ideal: 720 },
-              facingMode: 'environment', // Prefer back camera on mobile
+              facingMode: 'environment',
             },
           });
 
           video.srcObject = stream;
-
-          // Wait for video to be loaded
           video.onloadedmetadata = () => {
             setupOverlay();
           };
 
-          // Handle window resize
           window.addEventListener('resize', setupOverlay);
         } catch (err) {
-          alert('Tidak bisa mengakses webcam: ' + err.message);
+          alert(
+            '❌ Gagal mengakses kamera: ' +
+              err.message +
+              '\n\nTips:\n- Pastikan browser Anda memberikan izin.\n- Gunakan HTTPS.\n- Gunakan Chrome/Edge versi terbaru.'
+          );
         }
       }
 

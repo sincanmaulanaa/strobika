@@ -93,6 +93,13 @@ def deteksi():
         'detections': detections,
         'original_filename': filename
     }
+
+    # Wait until image is fully saved
+    for _ in range(10):  # up to ~2s
+        if os.path.exists(result_img_path):
+            break
+        time.sleep(0.2)
+
     
     return redirect(url_for('detection'))
 
