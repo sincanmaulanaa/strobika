@@ -119,3 +119,5 @@ celerybeat.pid
 
 # SageMath
 .sage-py
+
+results/
