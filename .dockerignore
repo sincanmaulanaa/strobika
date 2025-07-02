@@ -5,6 +5,7 @@ __pycache__/
 uploads/
 .env
 model.pt
+.pytest_cache
 
 # Git
 .git
@@ -27,3 +28,4 @@ venv/
 .DS_Store
 Thumbs.db
 results/
+
