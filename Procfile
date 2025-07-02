@@ -1,1 +1,1 @@
-web: gunicorn app:app
+web: pip install -r requirements-prod.txt && gunicorn app:app
