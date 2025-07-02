@@ -1,28 +1,33 @@
-# 🐍 Gunakan base image ringan
-FROM python:3.11-slim-bookworm
+FROM python:3.12-slim
 
-# ✅ Install system dependencies
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     libgl1 \
     libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
-# 🚀 Buat working directory
 WORKDIR /app
 
-# 🔒 Salin dan install dependency Python
-COPY requirements.txt .
+# Copy only requirements file first for better caching
+COPY requirements-prod.txt .
 RUN pip install --no-cache-dir --upgrade pip
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements-prod.txt
 
-# 📂 Salin semua source code ke dalam container
-COPY . .
+# Copy application files
+COPY app.py .
+COPY best.pt .
+COPY templates/ templates/
+COPY static/ static/
 
-# 🗂️ Pastikan direktori upload dan result tersedia
-RUN mkdir -p /tmp/uploads /tmp/results /app/static/results
+# Create necessary directories
+RUN mkdir -p /tmp/uploads /app/static/results
 
-# 🌍 Expose port 8080 (Cloud Run default)
-EXPOSE 8080
+# Make PORT available to the application
+ENV PORT=8080
 
-# 🚦 Jalankan aplikasi Flask dengan Gunicorn
-CMD ["gunicorn", "-b", "0.0.0.0:8080", "app:app"]
+# Run as non-root user for better security
+RUN useradd -m appuser
+USER appuser
+
+# CMD will be overridden by Heroku
+CMD gunicorn --bind 0.0.0.0:$PORT app:app

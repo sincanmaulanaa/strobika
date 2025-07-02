@@ -5,3 +5,4 @@ tests/
 .vscode/
 .pytest_cache/
 results/
+uploads/
