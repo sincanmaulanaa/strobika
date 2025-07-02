@@ -57,6 +57,9 @@ def deteksi():
     filename = secure_filename(file.filename)
     filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     file.save(filepath)
+    
+    # Define result_img_path with a default value
+    result_img_path = None
 
     # Deteksi menggunakan YOLOv8
     results = model(filepath)
@@ -101,12 +104,12 @@ def deteksi():
         'original_filename': filename
     }
 
-    # Wait until image is fully saved
-    for _ in range(10):  # up to ~2s
-        if os.path.exists(result_img_path):
-            break
-        time.sleep(0.2)
-
+    # Wait until image is fully saved - only if result_img_path exists
+    if result_img_path:
+        for _ in range(10):  # up to ~2s
+            if os.path.exists(result_img_path):
+                break
+            time.sleep(0.2)
     
     return redirect(url_for('detection'))
 
